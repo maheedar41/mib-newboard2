@@ -55,8 +55,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-// Custom line component that changes color based on trend
-const CustomLine = ({ points }: any) => {
+// Custom line component that renders segments with different colors
+const CustomActualLine = ({ points }: any) => {
   if (!points || points.length < 2) return null;
 
   const segments = [];
@@ -99,15 +99,15 @@ const CustomLine = ({ points }: any) => {
   return <g>{segments}</g>;
 };
 
-// Custom dot component
+// Custom dot component that matches segment colors
 const CustomDot = ({ cx, cy, payload }: any) => {
   if (!payload) return null;
   
-  const prevIndex = payload.index - 1;
+  const nextIndex = payload.index + 1;
   const data = payload.data || [];
   
-  if (prevIndex < 0) {
-    // First point - use neutral color
+  if (nextIndex >= data.length) {
+    // Last point - use neutral color
     return (
       <circle
         cx={cx}
@@ -122,12 +122,12 @@ const CustomDot = ({ cx, cy, payload }: any) => {
   }
   
   const current = data[payload.index];
-  const previous = data[prevIndex];
+  const next = data[nextIndex];
   
-  if (!current || !previous) return null;
+  if (!current || !next) return null;
   
-  const isIncreasing = current.remaining > previous.remaining;
-  const isFlat = current.remaining === previous.remaining;
+  const isIncreasing = next.remaining > current.remaining;
+  const isFlat = next.remaining === current.remaining;
   
   let dotColor;
   if (isFlat) {
@@ -237,15 +237,16 @@ const BurndownChart: React.FC<BurndownChartProps> = ({ data, sprintDates }) => {
               name="Guideline"
             />
 
-            {/* Main line with custom rendering */}
+            {/* Actual line with custom segments and dots */}
             <Line
               type="monotone"
               dataKey="remaining"
               stroke="transparent"
               strokeWidth={0}
               dot={<CustomDot />}
-              shape={<CustomLine />}
+              shape={<CustomActualLine />}
               name="Remaining"
+              connectNulls={true}
               activeDot={{
                 r: 6,
                 stroke: '#ffffff',

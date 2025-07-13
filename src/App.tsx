@@ -115,19 +115,19 @@ const mockData: EngineeringManager[] = [
           burndownData: [
             { date: 'Jul 7', guideline: 45, remaining: 45 },
             { date: 'Jul 8', guideline: 42, remaining: 40 },
-            { date: 'Jul 9', guideline: 39, remaining: 38 },
-            { date: 'Jul 10', guideline: 36, remaining: 35 },
+            { date: 'Jul 9', guideline: 39, remaining: 43 },
+            { date: 'Jul 10', guideline: 36, remaining: 41 },
             { date: 'Jul 11', guideline: 33, remaining: 32 },
             { date: 'Jul 12', guideline: 30, remaining: 30, isWeekend: true },
             { date: 'Jul 13', guideline: 30, remaining: 30, isWeekend: true },
-            { date: 'Jul 14', guideline: 27, remaining: 25 },
+            { date: 'Jul 14', guideline: 27, remaining: 35 },
             { date: 'Jul 15', guideline: 24, remaining: 22 },
             { date: 'Jul 16', guideline: 21, remaining: 20 },
             { date: 'Jul 17', guideline: 18, remaining: 17 },
-            { date: 'Jul 18', guideline: 15, remaining: 15 },
+            { date: 'Jul 18', guideline: 15, remaining: 19 },
             { date: 'Jul 19', guideline: 12, remaining: 13, isWeekend: true },
             { date: 'Jul 20', guideline: 12, remaining: 13, isWeekend: true },
-            { date: 'Jul 21', guideline: 0, remaining: 13 }
+            { date: 'Jul 21', guideline: 0, remaining: 8 }
           ]
         }
       },

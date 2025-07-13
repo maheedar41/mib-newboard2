@@ -56,7 +56,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 // Custom line component that changes color based on trend
-const CustomLine = ({ points, stroke }: any) => {
+const CustomLine = ({ points }: any) => {
   if (!points || points.length < 2) return null;
 
   const segments = [];
@@ -67,16 +67,18 @@ const CustomLine = ({ points, stroke }: any) => {
     
     if (!current || !next) continue;
     
-    const isRising = next.payload.remaining > current.payload.remaining;
-    const isFlat = next.payload.remaining === current.payload.remaining;
+    const currentValue = current.payload.remaining;
+    const nextValue = next.payload.remaining;
+    const isIncreasing = nextValue > currentValue;
+    const isFlat = nextValue === currentValue;
     
     let segmentColor;
     if (isFlat) {
       segmentColor = '#64748b'; // Gray for flat
-    } else if (isRising) {
-      segmentColor = '#ef4444'; // Red for rising (bad)
+    } else if (isIncreasing) {
+      segmentColor = '#22c55e'; // Green for increasing (scope added)
     } else {
-      segmentColor = '#22c55e'; // Green for falling (good)
+      segmentColor = '#ef4444'; // Red for decreasing (work completed)
     }
     
     segments.push(
@@ -124,16 +126,16 @@ const CustomDot = ({ cx, cy, payload }: any) => {
   
   if (!current || !previous) return null;
   
-  const isRising = current.remaining > previous.remaining;
+  const isIncreasing = current.remaining > previous.remaining;
   const isFlat = current.remaining === previous.remaining;
   
   let dotColor;
   if (isFlat) {
     dotColor = '#64748b';
-  } else if (isRising) {
-    dotColor = '#ef4444';
+  } else if (isIncreasing) {
+    dotColor = '#22c55e'; // Green for increasing
   } else {
-    dotColor = '#22c55e';
+    dotColor = '#ef4444'; // Red for decreasing
   }
   
   return (
@@ -158,15 +160,15 @@ const BurndownChart: React.FC<BurndownChartProps> = ({ data, sprintDates }) => {
   }));
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 h-full">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4 sm:p-6 h-full flex flex-col">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-          <span className="text-sm font-semibold text-slate-700">
+          <div className="w-2 h-2 bg-emerald-500 rounded-full flex-shrink-0"></div>
+          <span className="text-xs sm:text-sm font-semibold text-slate-700">
             {sprintDates}
           </span>
         </div>
-        <div className="flex items-center gap-6 text-xs">
+        <div className="flex items-center gap-4 sm:gap-6 text-xs">
           <div className="flex items-center gap-2">
             <div className="w-3 h-0.5 bg-slate-400 rounded-full"></div>
             <span className="text-slate-600 font-medium">Guideline</span>
@@ -178,11 +180,16 @@ const BurndownChart: React.FC<BurndownChartProps> = ({ data, sprintDates }) => {
         </div>
       </div>
       
-      <div className="h-56">
+      <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart 
             data={dataWithIndex} 
-            margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+            margin={{ 
+              top: 10, 
+              right: 10, 
+              left: 10, 
+              bottom: 10 
+            }}
           >
             <defs>
               <linearGradient id="guidelineGradient" x1="0" y1="0" x2="1" y2="0">
@@ -203,16 +210,18 @@ const BurndownChart: React.FC<BurndownChartProps> = ({ data, sprintDates }) => {
               dataKey="date"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: '#64748b', fontWeight: 500 }}
-              tickMargin={12}
+              tick={{ fontSize: 10, fill: '#64748b', fontWeight: 500 }}
+              tickMargin={8}
+              interval="preserveStartEnd"
             />
             
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: '#64748b', fontWeight: 500 }}
-              tickMargin={12}
+              tick={{ fontSize: 10, fill: '#64748b', fontWeight: 500 }}
+              tickMargin={8}
               domain={['dataMin - 3', 'dataMax + 3']}
+              width={30}
             />
             
             <Tooltip content={<CustomTooltip />} />
@@ -262,14 +271,14 @@ const BurndownChart: React.FC<BurndownChartProps> = ({ data, sprintDates }) => {
       </div>
       
       {/* Legend */}
-      <div className="flex items-center justify-center gap-8 mt-4 pt-4 border-t border-slate-100">
+      <div className="flex items-center justify-center gap-4 sm:gap-8 mt-4 pt-4 border-t border-slate-100 flex-wrap">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-          <span className="text-xs font-medium text-slate-600">Progress</span>
+          <span className="text-xs font-medium text-slate-600">Scope Added</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-rose-500 rounded-full"></div>
-          <span className="text-xs font-medium text-slate-600">Scope Increase</span>
+          <span className="text-xs font-medium text-slate-600">Work Completed</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-slate-500 rounded-full"></div>

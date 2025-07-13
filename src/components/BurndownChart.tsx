@@ -31,7 +31,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     const isAhead = variance < 0;
     
     return (
-      <div className="bg-white/95 backdrop-blur-sm border border-slate-200 rounded-xl p-4 shadow-xl">
+      <div className="bg-white/95 backdrop-blur-sm border border-slate-200 rounded-lg p-3 shadow-xl">
         <p className="text-sm font-semibold text-slate-800 mb-2">{label}</p>
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-4">
@@ -48,15 +48,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
               {isAhead ? '−' : '+'}{Math.abs(variance)} pts
             </span>
           </div>
-          <div className="text-xs text-center pt-1">
-            <span className={`px-2 py-1 rounded-full font-medium ${
-              isAhead 
-                ? 'bg-emerald-100 text-emerald-700' 
-                : 'bg-rose-100 text-rose-700'
-            }`}>
-              {isAhead ? 'Ahead of Schedule' : 'Behind Schedule'}
-            </span>
-          </div>
         </div>
       </div>
     );
@@ -64,77 +55,146 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const BurndownChart: React.FC<BurndownChartProps> = ({ data, sprintDates }) => {
-  // Create segments for different colored lines
-  const createSegments = () => {
-    const segments = [];
+// Custom line component that changes color based on trend
+const CustomLine = ({ points, stroke }: any) => {
+  if (!points || points.length < 2) return null;
+
+  const segments = [];
+  
+  for (let i = 0; i < points.length - 1; i++) {
+    const current = points[i];
+    const next = points[i + 1];
     
-    for (let i = 0; i < data.length - 1; i++) {
-      const current = data[i];
-      const next = data[i + 1];
-      const isRising = next.remaining > current.remaining;
-      const isFlat = next.remaining === current.remaining;
-      
-      segments.push({
-        start: i,
-        end: i + 1,
-        color: isFlat ? '#64748b' : isRising ? '#ef4444' : '#22c55e', // Red for rising (bad), Green for falling (good)
-        type: isFlat ? 'flat' : isRising ? 'rising' : 'falling'
-      });
+    if (!current || !next) continue;
+    
+    const isRising = next.payload.remaining > current.payload.remaining;
+    const isFlat = next.payload.remaining === current.payload.remaining;
+    
+    let segmentColor;
+    if (isFlat) {
+      segmentColor = '#64748b'; // Gray for flat
+    } else if (isRising) {
+      segmentColor = '#ef4444'; // Red for rising (bad)
+    } else {
+      segmentColor = '#22c55e'; // Green for falling (good)
     }
     
-    return segments;
-  };
+    segments.push(
+      <line
+        key={i}
+        x1={current.x}
+        y1={current.y}
+        x2={next.x}
+        y2={next.y}
+        stroke={segmentColor}
+        strokeWidth={3}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    );
+  }
+  
+  return <g>{segments}</g>;
+};
 
-  const segments = createSegments();
+// Custom dot component
+const CustomDot = ({ cx, cy, payload }: any) => {
+  if (!payload) return null;
+  
+  const prevIndex = payload.index - 1;
+  const data = payload.data || [];
+  
+  if (prevIndex < 0) {
+    // First point - use neutral color
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={4}
+        fill="#64748b"
+        stroke="#ffffff"
+        strokeWidth={2}
+        className="drop-shadow-sm"
+      />
+    );
+  }
+  
+  const current = data[payload.index];
+  const previous = data[prevIndex];
+  
+  if (!current || !previous) return null;
+  
+  const isRising = current.remaining > previous.remaining;
+  const isFlat = current.remaining === previous.remaining;
+  
+  let dotColor;
+  if (isFlat) {
+    dotColor = '#64748b';
+  } else if (isRising) {
+    dotColor = '#ef4444';
+  } else {
+    dotColor = '#22c55e';
+  }
+  
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={4}
+      fill={dotColor}
+      stroke="#ffffff"
+      strokeWidth={2}
+      className="drop-shadow-sm"
+    />
+  );
+};
 
-  // Create individual line data for each segment
-  const getSegmentData = (startIndex: number, endIndex: number) => {
-    return data.slice(startIndex, endIndex + 1);
-  };
+const BurndownChart: React.FC<BurndownChartProps> = ({ data, sprintDates }) => {
+  // Add index to each data point for trend calculation
+  const dataWithIndex = data.map((item, index) => ({
+    ...item,
+    index,
+    data
+  }));
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl shadow-lg border border-slate-200/60 p-4 lg:p-6 h-full backdrop-blur-sm">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 h-full">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full shadow-sm"></div>
-          <span className="text-xs font-semibold text-slate-700 bg-slate-100/80 px-3 py-1.5 rounded-full border border-slate-200">
+          <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+          <span className="text-sm font-semibold text-slate-700">
             {sprintDates}
           </span>
         </div>
-        <div className="flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-0.5 bg-slate-400 rounded-full opacity-60"></div>
+        <div className="flex items-center gap-6 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-0.5 bg-slate-400 rounded-full"></div>
             <span className="text-slate-600 font-medium">Guideline</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-0.5 bg-gradient-to-r from-emerald-500 to-rose-500 rounded-full"></div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-0.5 bg-emerald-500 rounded-full"></div>
             <span className="text-slate-600 font-medium">Actual</span>
           </div>
         </div>
       </div>
       
-      <div className="h-48 lg:h-56">
+      <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+          <LineChart 
+            data={dataWithIndex} 
+            margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+          >
             <defs>
               <linearGradient id="guidelineGradient" x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.8} />
-                <stop offset="100%" stopColor="#cbd5e1" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#cbd5e1" stopOpacity={0.6} />
               </linearGradient>
-              <filter id="glow">
-                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                <feMerge> 
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
             </defs>
             
             <CartesianGrid 
-              strokeDasharray="2 4" 
-              stroke="#e2e8f0" 
-              strokeOpacity={0.6}
+              strokeDasharray="1 3" 
+              stroke="#f1f5f9" 
+              strokeOpacity={0.8}
               horizontal={true}
               vertical={false}
             />
@@ -143,69 +203,57 @@ const BurndownChart: React.FC<BurndownChartProps> = ({ data, sprintDates }) => {
               dataKey="date"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 10, fill: '#64748b', fontWeight: 500 }}
-              tickMargin={8}
+              tick={{ fontSize: 11, fill: '#64748b', fontWeight: 500 }}
+              tickMargin={12}
             />
             
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 10, fill: '#64748b', fontWeight: 500 }}
-              tickMargin={8}
-              domain={['dataMin - 2', 'dataMax + 2']}
+              tick={{ fontSize: 11, fill: '#64748b', fontWeight: 500 }}
+              tickMargin={12}
+              domain={['dataMin - 3', 'dataMax + 3']}
             />
             
             <Tooltip content={<CustomTooltip />} />
 
-            {/* Guideline with gradient */}
+            {/* Guideline */}
             <Line
               type="monotone"
               dataKey="guideline"
               stroke="url(#guidelineGradient)"
               strokeWidth={2}
-              strokeDasharray="6 4"
+              strokeDasharray="4 4"
               dot={false}
               name="Guideline"
-              filter="url(#glow)"
             />
 
-            {/* Render each segment with its own color */}
-            {segments.map((segment, index) => (
-              <Line
-                key={`segment-${index}`}
-                type="monotone"
-                dataKey="remaining"
-                data={getSegmentData(segment.start, segment.end)}
-                stroke={segment.color}
-                strokeWidth={3}
-                dot={{
-                  fill: segment.color,
-                  strokeWidth: 2,
-                  stroke: '#ffffff',
-                  r: 4,
-                  filter: 'url(#glow)'
-                }}
-                activeDot={{
-                  r: 6,
-                  stroke: segment.color,
-                  strokeWidth: 3,
-                  fill: '#ffffff',
-                  filter: 'url(#glow)'
-                }}
-                name="Remaining"
-                connectNulls={false}
-              />
-            ))}
+            {/* Main line with custom rendering */}
+            <Line
+              type="monotone"
+              dataKey="remaining"
+              stroke="transparent"
+              strokeWidth={0}
+              dot={<CustomDot />}
+              shape={<CustomLine />}
+              name="Remaining"
+              activeDot={{
+                r: 6,
+                stroke: '#ffffff',
+                strokeWidth: 3,
+                fill: '#3b82f6'
+              }}
+            />
 
             {/* Weekend reference lines */}
-            {data.map((point, index) => 
+            {dataWithIndex.map((point, index) => 
               point.isWeekend ? (
                 <ReferenceLine
                   key={`weekend-${index}`}
                   x={point.date}
-                  stroke="#f1f5f9"
-                  strokeWidth={1}
-                  strokeOpacity={0.8}
+                  stroke="#f8fafc"
+                  strokeWidth={2}
+                  strokeOpacity={0.6}
                 />
               ) : null
             )}
@@ -213,18 +261,18 @@ const BurndownChart: React.FC<BurndownChartProps> = ({ data, sprintDates }) => {
         </ResponsiveContainer>
       </div>
       
-      {/* Status indicators */}
-      <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-slate-200/60">
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-8 mt-4 pt-4 border-t border-slate-100">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-sm"></div>
-          <span className="text-xs font-medium text-slate-600">Progress (Good)</span>
+          <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+          <span className="text-xs font-medium text-slate-600">Progress</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-rose-500 rounded-full shadow-sm"></div>
-          <span className="text-xs font-medium text-slate-600">Scope Increase (Risk)</span>
+          <div className="w-3 h-3 bg-rose-500 rounded-full"></div>
+          <span className="text-xs font-medium text-slate-600">Scope Increase</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-slate-500 rounded-full shadow-sm"></div>
+          <div className="w-3 h-3 bg-slate-500 rounded-full"></div>
           <span className="text-xs font-medium text-slate-600">No Change</span>
         </div>
       </div>

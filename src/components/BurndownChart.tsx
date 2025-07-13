@@ -160,15 +160,15 @@ const BurndownChart: React.FC<BurndownChartProps> = ({ data, sprintDates }) => {
   }));
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4 sm:p-6 h-full flex flex-col">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
+    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4 lg:p-6 h-full flex flex-col">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 bg-emerald-500 rounded-full flex-shrink-0"></div>
           <span className="text-xs sm:text-sm font-semibold text-slate-700">
             {sprintDates}
           </span>
         </div>
-        <div className="flex items-center gap-4 sm:gap-6 text-xs">
+        <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-2">
             <div className="w-3 h-0.5 bg-slate-400 rounded-full"></div>
             <span className="text-slate-600 font-medium">Guideline</span>
@@ -180,7 +180,7 @@ const BurndownChart: React.FC<BurndownChartProps> = ({ data, sprintDates }) => {
         </div>
       </div>
       
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0" style={{ minHeight: '200px' }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart 
             data={dataWithIndex} 
@@ -271,7 +271,7 @@ const BurndownChart: React.FC<BurndownChartProps> = ({ data, sprintDates }) => {
       </div>
       
       {/* Legend */}
-      <div className="flex items-center justify-center gap-4 sm:gap-8 mt-4 pt-4 border-t border-slate-100 flex-wrap">
+      <div className="flex items-center justify-center gap-4 sm:gap-6 mt-4 pt-4 border-t border-slate-100 flex-wrap">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
           <span className="text-xs font-medium text-slate-600">Scope Added</span>
